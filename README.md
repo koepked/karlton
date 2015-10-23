@@ -17,7 +17,7 @@ $ cd karlton
 $ sudo bin/start_cluster.py NUM_NODES
   ```
 
- 1. Launch one of the example mpi jobs.
+ 1. Launch the example mpi job.
   ```
 $ cd /karlton/example
 $ make
