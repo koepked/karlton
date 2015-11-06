@@ -2,9 +2,22 @@ FROM centos
 MAINTAINER Dan Koepke
 
 # System setup
-RUN yum -y install openmpi openmpi-devel openssh-server
+RUN yum -y install openmpi openmpi-devel openssh-server openssl openssl-devel \
+                   bzip2-devel zlib-devel openssl wget
 RUN yum -y groupinstall "Development Tools"
 ADD custom.sh /etc/profile.d/custom.sh
+
+# Munge
+RUN wget https://github.com/dun/munge/archive/munge-0.5.11.tar.gz
+RUN tar -xf munge-0.5.11.tar.gz
+RUN cd munge-munge-0.5.11 && ./configure --prefix=/usr --sysconfdir=/etc \
+    --localstatedir=/var --libdir=/usr/lib64 && make && make install
+RUN chmod 0700 /etc/munge/
+RUN chmod 0711 /var/lib/munge/
+RUN chmod 0700 /var/log/munge/
+RUN chmod 0755 /var/run/munge/
+RUN dd if=/dev/urandom bs=1 count=1024 > /etc/munge/munge.key
+RUN chmod 0600 /etc/munge/munge.key
 
 # SSH
 ENV HOME /root
