@@ -19,6 +19,19 @@ RUN chmod 0755 /var/run/munge/
 RUN dd if=/dev/urandom bs=1 count=1024 > /etc/munge/munge.key
 RUN chmod 0600 /etc/munge/munge.key
 
+# SLURM
+RUN wget http://www.schedmd.com/download/archive/slurm-15.08.2.tar.bz2
+RUN tar -xf slurm-15.08.2.tar.bz2
+RUN cd slurm-15.08.2 && ./configure --prefix=/usr --sysconfdir=/etc \
+    && make && make install
+ADD slurm.conf /etc/slurm.conf
+RUN useradd -M slurm
+RUN usermod -L slurm
+RUN mkdir /var/spool/slurm
+RUN chown slurm:slurm var/spool/slurm
+RUN mkdir /var/log/slurm
+RUN chown slurm:slurm var/log/slurm
+
 # SSH
 ENV HOME /root
 RUN mkdir -p /root/.ssh

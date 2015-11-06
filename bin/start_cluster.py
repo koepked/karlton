@@ -54,7 +54,8 @@ if __name__ == '__main__':
 			  data_name, 'karlton', '/usr/sbin/sshd', '-D'])
 	
 	# Launch head node.
-	args = ['docker', 'run', '--name=karlton-head', '-i', '-t', '--rm=true']
+	args = ['docker', 'run', '--name=karlton-head', '--hostname=karlton-head',
+	        '-i', '-t', '--rm=true']
 	args += ['--link=%s:%s' % (link, link) for link in links]
 	args += ['--volumes-from', data_name]
 	args += ['karlton', '/bin/bash', '-l']
