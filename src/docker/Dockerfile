@@ -40,6 +40,7 @@ RUN chmod 600 /root/.ssh/config
 RUN /usr/bin/ssh-keygen -f /root/.ssh/id_rsa -t rsa -N ''
 RUN cp /root/.ssh/{id_rsa.pub,authorized_keys}
 RUN /usr/bin/ssh-keygen -A
+ADD setup_known_hosts.py /root/touch_nodes.py
 EXPOSE 22
 
 # Add mpi examples
