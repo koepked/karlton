@@ -11,4 +11,4 @@ with open(HOST_FILE, 'r') as f:
         list(f)[1:])
 
 for line in lines:
-    call(['ssh', line.strip().split()[1], '"exit"'])
+    call(['scp', '/etc/hosts', '%s:/etc/hosts' % line.strip().split()[1]])
