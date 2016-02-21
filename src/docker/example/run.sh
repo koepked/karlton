@@ -12,7 +12,7 @@ date
 #echo "-------------------------"
 #printenv | grep SLURM
 
-mpirun karlton
+mpirun --allow-run-as-root karlton
 
 # Wait for any background jobs
 wait
