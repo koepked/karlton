@@ -37,10 +37,16 @@ if __name__ == '__main__':
 	    f.write('ADD %s /karlton/mpi-hosts' % TMP_MPI_HOSTFILE)
 	
 	# Build base image.
-	call(['docker', 'build', '-t', 'karlton', 'src/docker'])
+	ret = call(['docker', 'build', '-t', 'karlton', 'src/docker'])
+	if ret != 0:
+	    print 'ERROR: base image build error: %d' % ret
+	    sys.exit(1)
 
 	# Build data volume image with generated mpi-hosts file.
-	call(['docker', 'build', '-t', 'karlton-data', 'build'])
+	ret = call(['docker', 'build', '-t', 'karlton-data', 'build'])
+	if ret != 0:
+	    print 'ERROR: data volume image build error: %d' % ret
+	    sys.exit(1)
 
 	# Launch data volume for shared files.
 	call(['docker', 'create', '-v', data_mount, '--name', data_name,
