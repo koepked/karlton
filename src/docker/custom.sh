@@ -5,7 +5,7 @@ if [ $(hostname) = karlton-head ]
 then
     #su -c /usr/sbin/slurmctld slurm
     /usr/sbin/slurmctld
-    /root/set_compute_node_hosts.py
+    /root/touch_nodes.py
 else
     #su -c /usr/sbin/slurmd slurm
     /usr/sbin/slurmd
