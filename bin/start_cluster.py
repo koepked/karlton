@@ -24,7 +24,7 @@ if __name__ == '__main__':
 	data_mount = '/karlton'
 	data_name = 'karlton-data'
 	net_name = 'karlton_net'
-	node_image_dir = 'src/docker'
+	node_image_dir = 'src/node'
 	data_image_dir = 'src/data'
 	hosts_file = 'src/data/hosts'
 

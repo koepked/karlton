@@ -42,6 +42,3 @@ RUN cp /root/.ssh/{id_rsa.pub,authorized_keys}
 RUN /usr/bin/ssh-keygen -A
 ADD touch_nodes.py /root/touch_nodes.py
 EXPOSE 22
-
-# Add mpi examples
-#ADD example /karlton/example
