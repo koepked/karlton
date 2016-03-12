@@ -1,6 +1,6 @@
 FROM centos
 MAINTAINER Dan Koepke
 
-ADD example /karlton/example
-ADD hosts /karlton/hosts
+ADD example /shared/karlton/example
+ADD hosts /shared/karlton/hosts
 

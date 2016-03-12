@@ -14,6 +14,42 @@ from subprocess import call
 TMP_MPI_HOSTFILE = 'temp-mpi-hosts'
 
 if __name__ == '__main__':
+	data_name = 'karlton-data'
+	data_mount = '/shared'
+	data_image_dir = 'src/data'
+
+	head_name = 'karlton-head'
+	head_image_dir = 'src/head'
+
+	base_image_dir = 'src/base'
+	node_image_dir = 'src/node'
+
+	# Build data image.
+	ret = call(['docker', 'build', '-t', data_name, data_image_dir])
+	if ret != 0:
+	    print 'ERROR: data volume image build error: %d' % ret
+	    sys.exit(1)
+	# Build head image.
+	ret = call(['docker', 'build', '-t', head_name, head_image_dir])
+	if ret != 0:
+	    print 'ERROR: head volume image build error: %d' % ret
+	    sys.exit(1)
+
+	# Launch data volume for shared files.
+	call(['docker', 'create', '-v', data_mount, '--name', data_name,
+		  'karlton-data', '/bin/true'])
+
+	# Launch head node.
+	args = ['docker', 'run', '--name=%s' % head_name,
+	        '--hostname=%s' % head_name, '-i', '-t', '--rm=true',
+	        '--net=%s' % net_name, '--volumes-from', data_name, 'karlton',
+	        '/bin/bash', '-l']
+	ret = call(args)
+	if ret != 0:
+	    print 'ERROR: launch of head node failed: %d' % ret
+	    sys.exit(1)
+
+if __name__ == '__test-main__':
 	descrip = 'Launch a container-based virtual HPC cluster.'
 	parser = argparse.ArgumentParser(prog='bin/start_cluster.py',
 									 description=descrip)

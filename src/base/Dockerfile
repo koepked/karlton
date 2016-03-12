@@ -3,7 +3,7 @@ MAINTAINER Dan Koepke
 
 # System setup
 RUN yum -y install openmpi openmpi-devel openssh-server openssl openssl-devel \
-                   bzip2-devel zlib-devel openssl wget
+                   bzip2-devel zlib-devel openssl wget nfs-utils nfs-utils-lib
 RUN yum -y groupinstall "Development Tools"
 ADD custom.sh /etc/profile.d/custom.sh
 
