@@ -15,7 +15,7 @@ if __name__ == '__main__':
 	# Setup shared files
 	with open('/shared/shared/touch_nodes.sh', 'w') as f:
 		for i in range(num_nodes_per_host * 2):
-			f.write('ssh karlton-node%d "exit"\n' % i)
+			f.write('ssh karlton-node%d\n' % i)
 
 	# Build image
 	#ret = call(['docker', 'build', '-t', image_name, image_dir])
