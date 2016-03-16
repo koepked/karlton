@@ -5,7 +5,7 @@ MAINTAINER Dan Koepke
 RUN apt-get update
 RUN DEBIAN_FRONTEND=noninteractive \
     apt-get install -y openmpi-bin libopenmpi-dev openssh-server openssl \
-                       libssl-dev build-essential
+                       libssl-dev build-essential gfortran libgfortran3 vim
 ADD custom.sh /etc/profile.d/custom.sh
 
 # Munge
