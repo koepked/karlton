@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """Launch a container-based virtual HPC cluster."""
 
+import os
 import sys
 from subprocess import call
 
@@ -16,6 +17,9 @@ if __name__ == '__main__':
 	with open('/shared/shared/touch_nodes.sh', 'w') as f:
 		for i in range(num_nodes_per_host * 2):
 			f.write('ssh karlton-node%d\n' % i)
+
+	# Clear known_hosts
+	os.remove('/shared/root/.ssh/known_hosts')
 
 	# Build image
 	#ret = call(['docker', 'build', '-t', image_name, image_dir])
