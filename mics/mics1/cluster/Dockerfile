@@ -1,0 +1,40 @@
+FROM ubuntu
+MAINTAINER Dan Koepke
+
+# System setup
+RUN apt-get update
+RUN DEBIAN_FRONTEND=noninteractive \
+    apt-get install -y openmpi-bin libopenmpi-dev openssh-server openssl \
+                       libssl-dev build-essential gfortran libgfortran3 vim
+ADD custom.sh /etc/profile.d/custom.sh
+
+# Munge
+RUN wget https://github.com/dun/munge/archive/munge-0.5.11.tar.gz
+RUN tar -xf munge-0.5.11.tar.gz
+RUN cd munge-munge-0.5.11 && ./configure --prefix=/usr --sysconfdir=/etc \
+    --localstatedir=/var --libdir=/usr/lib64 && make && make install
+RUN chmod 0700 /etc/munge/
+RUN chmod 0711 /var/lib/munge/
+RUN chmod 0700 /var/log/munge/
+RUN chmod 0755 /var/run/munge/
+#RUN dd if=/dev/urandom bs=1 count=1024 > /etc/munge/munge.key
+#RUN chmod 0600 /etc/munge/munge.key
+
+# SLURM
+RUN wget http://www.schedmd.com/download/archive/slurm-15.08.2.tar.bz2
+RUN tar -xf slurm-15.08.2.tar.bz2
+RUN cd slurm-15.08.2 && ./configure --prefix=/usr --sysconfdir=/etc \
+    && make && make install
+RUN useradd -M slurm
+RUN usermod -L slurm
+RUN mkdir /var/spool/slurm
+RUN chown slurm:slurm var/spool/slurm
+RUN mkdir /var/log/slurm
+RUN chown slurm:slurm var/log/slurm
+
+# SSH
+ENV HOME /root
+RUN mkdir /var/run/sshd
+RUN ssh-keygen -A
+
+EXPOSE 22
