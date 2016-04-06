@@ -2,11 +2,17 @@
 
 import argparse
 import sys
+import time
+
+from subprocess import check_output, STDOUT
 
 NAS_BIN_DIR = '/shared/NAS/bin'
 NET_INTF = 'p10p1'
 MPIHOSTS = 'mpihosts'
 ALL_CLASSES = ['S', 'W', 'A', 'B', 'C', 'D', 'E', 'F']
+NPROC_LIST = [16, 25, 32, 36, 49, 64, 81, 100, 121, 128, 144]
+TIMESTAMP_FMT = "%d %b %Y %H:%M"
+RANK_STRATEGIES = ['bind-host_split', 'bind-host_interleave', 'bind-host_fill_n']
 
 def check_pow_of_two(n):
     return ((n & (n-1)) == 0) and n != 0
@@ -20,6 +26,8 @@ def check_n_squared(n):
         return False
     return n in l
 
+def build_rank_file
+
 ALL_BENCHMARKS = {
     'is': {'nprocs_constraint': check_pow_of_two},
     'ep': {'nprocs_constraint': check_any},
@@ -30,7 +38,6 @@ ALL_BENCHMARKS = {
     'sp': {'nprocs_constraint': check_n_squared},
     'lu': {'nprocs_constraint': check_n_squared}
 }
-NPROC_LIST = [16, 25, 32, 36, 49, 64, 81, 100, 121, 128, 144]
 
 def arg_list(s):
     if s[0] == ',':
@@ -60,9 +67,29 @@ def launch_benchmark(benchmark, benchmark_class, host_file, nprocs, bin_dir,
         launch_args += ['--mca', 'btl_tcp_if_include', net_intf]
     if rank_file:
         launch_args += ['--mca', 'rmaps_rank_file_path', rank_file]
+        with open(rank_file, 'r') as f:
+            rank_file_contents = f.read()
     launch_args.append('%s/%s.%s.%s'
                        % (bin_dir, benchmark, benchmark_class, nprocs))
-    print launch_args
+
+    print 'Running:\n%s' % ' '.join(launch_args)
+    timestamp = time.strftim(TIMESTAMP_FMT)
+    output = check_output(launch_args, stderr=STDOUT)
+
+    with open(host_file, 'r') as f:
+        host_file_contents = f.read()
+
+    with open(output_file, 'w') as f:
+        f.write(timestamp)
+        f.write('\n\n######### LAUNCH COMMAND:\n\n')
+        f.write(' '.join(launch_args)
+        f.write('\n\n######### JOB OUTPUT:\n\n')
+        f.write(output)
+        f.write('\n\n######### HOSTFILE (%s) CONTENTS:\n\n' % host_file)
+        f.write(host_file_contents)
+        if rank_file:
+            f.write('\n\n######### RANKFILE (%s) CONTENTS:\n\n' % rank_file)
+            f.write(rank_file_contents)
                            
 
 if __name__ == '__main__':
@@ -71,6 +98,7 @@ if __name__ == '__main__':
     arg_parser.add_argument('--nprocs', type=int)
     arg_parser.add_argument('--nprocs_range', type=num_range)
     arg_parser.add_argument('--benchmarks', type=arg_list)
+    arg_parser.add_argument('--rank_strategy')
     args = arg_parser.parse_args(sys.argv[1:])
 
     nprocs = args.nprocs
