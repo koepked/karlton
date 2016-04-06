@@ -66,3 +66,5 @@ target/
 
 # Karlton
 src/data/hosts
+*.results
+metal/hostfile

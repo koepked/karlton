@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
+import os
 import sys
 import time
 
@@ -26,7 +27,22 @@ def check_n_squared(n):
         return False
     return n in l
 
-def build_rank_file
+def build_rank_file(strategy, nprocs, hosts, filename):
+    num_hosts = len(hosts)
+    nodes_per_host = nprocs/num_hosts
+    contents = []
+
+    if strategy == 'bind-host_split':
+        for i in range(num_hosts - 1):
+
+            contents += ['rank %d=%s slot=0,1:0-7' % (nodes_per_host * i + j, hosts[i])
+                        for j in range(nodes_per_host)]
+
+        contents += ['rank %d=%s slot=0,1:0-7' % (nodes_per_host * (num_hosts - 1) + j,
+                     hosts[num_hosts - 1]) for j in range(nodes_per_host + (nprocs % num_hosts))]
+
+    with open(filename, 'w') as f:
+        f.write('\n'.join(contents))
 
 ALL_BENCHMARKS = {
     'is': {'nprocs_constraint': check_pow_of_two},
@@ -73,7 +89,7 @@ def launch_benchmark(benchmark, benchmark_class, host_file, nprocs, bin_dir,
                        % (bin_dir, benchmark, benchmark_class, nprocs))
 
     print 'Running:\n%s' % ' '.join(launch_args)
-    timestamp = time.strftim(TIMESTAMP_FMT)
+    timestamp = time.strftime(TIMESTAMP_FMT)
     output = check_output(launch_args, stderr=STDOUT)
 
     with open(host_file, 'r') as f:
@@ -82,7 +98,7 @@ def launch_benchmark(benchmark, benchmark_class, host_file, nprocs, bin_dir,
     with open(output_file, 'w') as f:
         f.write(timestamp)
         f.write('\n\n######### LAUNCH COMMAND:\n\n')
-        f.write(' '.join(launch_args)
+        f.write(' '.join(launch_args))
         f.write('\n\n######### JOB OUTPUT:\n\n')
         f.write(output)
         f.write('\n\n######### HOSTFILE (%s) CONTENTS:\n\n' % host_file)
@@ -94,6 +110,7 @@ def launch_benchmark(benchmark, benchmark_class, host_file, nprocs, bin_dir,
 
 if __name__ == '__main__':
     arg_parser = argparse.ArgumentParser()
+    arg_parser.add_argument('hostfile')
     arg_parser.add_argument('--classes', type=arg_list)
     arg_parser.add_argument('--nprocs', type=int)
     arg_parser.add_argument('--nprocs_range', type=num_range)
@@ -102,6 +119,7 @@ if __name__ == '__main__':
     args = arg_parser.parse_args(sys.argv[1:])
 
     nprocs = args.nprocs
+    hostfile = args.hostfile
 
     if args.classes:
         classes = args.classes
@@ -120,12 +138,21 @@ if __name__ == '__main__':
     else:
         nprocs_range = (NPROC_LIST[0], NPROC_LIST[-1:][0]+1)
 
+    with open(hostfile, 'r') as f:
+        hosts = f.read().split('\n')
+    if hosts[len(hosts)-1] == '':
+        hosts = hosts[:-1]
+
+    build_rank_file('bind-host_split', nprocs, hosts, 'rankfile')
+
     for cls in classes:
         for benchmark in benchmarks:
             nprocs_list = [n for n in NPROC_LIST if (n in range(*nprocs_range)
                            and nprocs_valid(n, benchmark))]
             for nprocs in nprocs_list:
-                launch_benchmark(benchmark, cls, 'test_hosts', nprocs,
+                launch_benchmark(benchmark, cls, hostfile, nprocs,
                                  NAS_BIN_DIR,
                                  '%s.%s.%d.results' % (benchmark, cls, nprocs),
-                                 'test_rank', NET_INTF)
+                                 'rankfile', NET_INTF)
+
+    os.remove('rankfile')
