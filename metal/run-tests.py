@@ -161,7 +161,6 @@ if __name__ == '__main__':
     hosts = map(lambda x: x.split()[0], host_lines)
 
     build_rank_file(rank_strategy, nprocs, hosts, 'rankfile')
-    sys.exit('Debug exit')
 
     for cls in classes:
         for benchmark in benchmarks:
