@@ -7,7 +7,7 @@ import time
 
 from subprocess import check_output, STDOUT
 
-NAS_BIN_DIR = '/shared/NAS/bin'
+NAS_BIN_DIR = '/shared/baremetal/NPB3.3.1/NPB3.3-MPI/bin'
 NET_INTF = 'p10p1'
 MPIHOSTS = 'mpihosts'
 ALL_CLASSES = ['S', 'W', 'A', 'B', 'C', 'D', 'E', 'F']
@@ -106,7 +106,6 @@ def launch_benchmark(benchmark, benchmark_class, host_file, nprocs, bin_dir,
         if rank_file:
             f.write('\n\n######### RANKFILE (%s) CONTENTS:\n\n' % rank_file)
             f.write(rank_file_contents)
-                           
 
 if __name__ == '__main__':
     arg_parser = argparse.ArgumentParser()
@@ -139,9 +138,11 @@ if __name__ == '__main__':
         nprocs_range = (NPROC_LIST[0], NPROC_LIST[-1:][0]+1)
 
     with open(hostfile, 'r') as f:
-        hosts = f.read().split('\n')
-    if hosts[len(hosts)-1] == '':
-        hosts = hosts[:-1]
+        host_lines = f.read().split('\n')
+    if host_lines[len(host_lines)-1] == '':
+        host_lines = host_lines[:-1]
+
+    hosts = map(lambda x: x.split()[0], host_lines)
 
     build_rank_file('bind-host_split', nprocs, hosts, 'rankfile')
 
