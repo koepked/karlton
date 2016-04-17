@@ -14,6 +14,7 @@ ALL_CLASSES = ['S', 'W', 'A', 'B', 'C', 'D', 'E', 'F']
 NPROC_LIST = [16, 25, 32, 36, 49, 64, 81, 100, 121, 128, 144]
 TIMESTAMP_FMT = "%d %b %Y %H:%M"
 RANK_STRATEGIES = ['bind-host_split', 'bind-host_interleave', 'bind-host_fill_n']
+CORES_PER_HOST = 16
 
 def check_pow_of_two(n):
     return ((n & (n-1)) == 0) and n != 0
@@ -27,7 +28,7 @@ def check_n_squared(n):
         return False
     return n in l
 
-def build_rank_file(strategy, nprocs, hosts, filename):
+def build_rank_file(strategy, nprocs, hosts, filename, n=CORES_PER_HOST):
     num_hosts = len(hosts)
     nodes_per_host = nprocs/num_hosts
     contents = []
@@ -40,6 +41,16 @@ def build_rank_file(strategy, nprocs, hosts, filename):
 
         contents += ['rank %d=%s slot=0,1:0-7' % (nodes_per_host * (num_hosts - 1) + j,
                      hosts[num_hosts - 1]) for j in range(nodes_per_host + (nprocs % num_hosts))]
+
+    if strategy == 'bind-host_fill_n':
+        pairs = []
+        start = 0
+        while start < nprocs:
+            pairs += [(i, (i/n) % num_hosts) for i in range(start, start+n)]
+            start += n
+        pairs = filter(lambda x: x[0] < nprocs, pairs)
+        contents += ['rank %d=%s slot=0,1:0-7' % (pair[0], hosts[pair[1]])
+                    for pair in pairs]
 
     with open(filename, 'w') as f:
         f.write('\n'.join(contents))
@@ -137,6 +148,11 @@ if __name__ == '__main__':
     else:
         nprocs_range = (NPROC_LIST[0], NPROC_LIST[-1:][0]+1)
 
+    if args.rank_strategy:
+        rank_strategy = args.rank_strategy
+    else:
+        rank_strategy = 'bind-host_split'
+
     with open(hostfile, 'r') as f:
         host_lines = f.read().split('\n')
     if host_lines[len(host_lines)-1] == '':
@@ -144,7 +160,8 @@ if __name__ == '__main__':
 
     hosts = map(lambda x: x.split()[0], host_lines)
 
-    build_rank_file('bind-host_split', nprocs, hosts, 'rankfile')
+    build_rank_file(rank_strategy, nprocs, hosts, 'rankfile')
+    sys.exit('Debug exit')
 
     for cls in classes:
         for benchmark in benchmarks:
