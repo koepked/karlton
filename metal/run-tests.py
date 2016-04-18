@@ -36,10 +36,10 @@ def build_rank_file(strategy, nprocs, hosts, filename, n=CORES_PER_HOST):
     if strategy == 'bind-host_split':
         for i in range(num_hosts - 1):
 
-            contents += ['rank %d=%s slot=0,1:0-7' % (nodes_per_host * i + j, hosts[i])
+            contents += ['rank %d=%s slot=0:0-7,1:0-7' % (nodes_per_host * i + j, hosts[i])
                         for j in range(nodes_per_host)]
 
-        contents += ['rank %d=%s slot=0,1:0-7' % (nodes_per_host * (num_hosts - 1) + j,
+        contents += ['rank %d=%s slot=0:0-7,1:0-7' % (nodes_per_host * (num_hosts - 1) + j,
                      hosts[num_hosts - 1]) for j in range(nodes_per_host + (nprocs % num_hosts))]
 
     if strategy == 'bind-host_fill_n':
@@ -49,7 +49,7 @@ def build_rank_file(strategy, nprocs, hosts, filename, n=CORES_PER_HOST):
             pairs += [(i, (i/n) % num_hosts) for i in range(start, start+n)]
             start += n
         pairs = filter(lambda x: x[0] < nprocs, pairs)
-        contents += ['rank %d=%s slot=0,1:0-7' % (pair[0], hosts[pair[1]])
+        contents += ['rank %d=%s slot=0:0-7,1:0-7' % (pair[0], hosts[pair[1]])
                     for pair in pairs]
 
     with open(filename, 'w') as f:
@@ -160,13 +160,12 @@ if __name__ == '__main__':
 
     hosts = map(lambda x: x.split()[0], host_lines)
 
-    build_rank_file(rank_strategy, nprocs, hosts, 'rankfile')
-
     for cls in classes:
         for benchmark in benchmarks:
             nprocs_list = [n for n in NPROC_LIST if (n in range(*nprocs_range)
                            and nprocs_valid(n, benchmark))]
             for nprocs in nprocs_list:
+                build_rank_file(rank_strategy, nprocs, hosts, 'rankfile')
                 launch_benchmark(benchmark, cls, hostfile, nprocs,
                                  NAS_BIN_DIR,
                                  '%s.%s.%d.results' % (benchmark, cls, nprocs),
