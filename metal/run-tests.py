@@ -151,7 +151,7 @@ if __name__ == '__main__':
     if args.rank_strategy:
         rank_strategy = args.rank_strategy
     else:
-        rank_strategy = 'bind-host_split'
+        rank_strategy = None
 
     with open(hostfile, 'r') as f:
         host_lines = f.read().split('\n')
@@ -165,10 +165,16 @@ if __name__ == '__main__':
             nprocs_list = [n for n in NPROC_LIST if (n in range(*nprocs_range)
                            and nprocs_valid(n, benchmark))]
             for nprocs in nprocs_list:
-                build_rank_file(rank_strategy, nprocs, hosts, 'rankfile')
-                launch_benchmark(benchmark, cls, hostfile, nprocs,
-                                 NAS_BIN_DIR,
-                                 '%s.%s.%d.results' % (benchmark, cls, nprocs),
-                                 'rankfile', NET_INTF)
+                if rank_strategy:
+                    build_rank_file(rank_strategy, nprocs, hosts, 'rankfile')
+                    launch_benchmark(benchmark, cls, hostfile, nprocs,
+                                     NAS_BIN_DIR,
+                                     '%s.%s.%d.results' % (benchmark, cls, nprocs),
+                                     'rankfile', NET_INTF)
+                else:
+                    launch_benchmark(benchmark, cls, hostfile, nprocs,
+                                     NAS_BIN_DIR,
+                                     '%s.%s.%d.results' % (benchmark, cls, nprocs),
+                                     net_intf=NET_INTF)
 
     os.remove('rankfile')
