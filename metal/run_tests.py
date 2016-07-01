@@ -11,10 +11,13 @@ NAS_BIN_DIR = '/shared/baremetal/NPB3.3.1/NPB3.3-MPI/bin'
 NET_INTF = 'p10p1'
 MPIHOSTS = 'mpihosts'
 ALL_CLASSES = ['S', 'W', 'A', 'B', 'C', 'D', 'E', 'F']
-NPROC_LIST = [16, 25, 32, 36, 49, 64, 81, 100, 121, 128, 144]
+NPROC_LIST = [8, 9, 16, 25, 32, 36, 49, 64, 81, 100, 121, 128, 144]
 TIMESTAMP_FMT = "%d %b %Y %H:%M"
 RANK_STRATEGIES = ['bind-host_split', 'bind-host_interleave', 'bind-host_fill_n']
-CORES_PER_HOST = 16
+SLOTS_PER_HOST = 2
+CORES_PER_SLOT = 8
+
+CORES_PER_HOST = SLOTS_PER_HOST * CORES_PER_SLOT
 
 def check_pow_of_two(n):
     return ((n & (n-1)) == 0) and n != 0
@@ -23,7 +26,7 @@ def check_any(n):
     return True
 
 def check_n_squared(n):
-    l = [4, 16, 25, 36, 49, 64, 81, 100, 121, 144, 169, 196, 225]
+    l = [4, 9, 16, 25, 36, 49, 64, 81, 100, 121, 144, 169, 196, 225]
     if n > l[-1:][0]:
         return False
     return n in l
@@ -51,6 +54,20 @@ def build_rank_file(strategy, nprocs, hosts, filename, n=CORES_PER_HOST):
         pairs = filter(lambda x: x[0] < nprocs, pairs)
         contents += ['rank %d=%s slot=0:0-7,1:0-7' % (pair[0], hosts[pair[1]])
                     for pair in pairs]
+
+    if strategy == 'rank-map-to-core':
+        for i in range(num_hosts):
+            for j in range(SLOTS_PER_HOST):
+                for k in range(CORES_PER_SLOT):
+                    rank = i*CORES_PER_HOST + j*CORES_PER_SLOT + k
+                    if rank == nprocs:
+                        break
+                    args = (rank, hosts[i], j, k)
+                    contents += ['rank %d=%s slot=%d:%d' % args]
+                if rank == nprocs:
+                    break
+            if rank == nprocs:
+                break    
 
     with open(filename, 'w') as f:
         f.write('\n'.join(contents))
@@ -93,9 +110,14 @@ def launch_benchmark(benchmark, benchmark_class, host_file, nprocs, bin_dir,
     if net_intf:
         launch_args += ['--mca', 'btl_tcp_if_include', net_intf]
     if rank_file:
-        launch_args += ['--mca', 'rmaps_rank_file_path', rank_file]
+        #launch_args += ['--mca', 'rmaps_rank_file_path', rank_file]
+        launch_args += ['--rankfile', rank_file]
         with open(rank_file, 'r') as f:
             rank_file_contents = f.read()
+    #launch_args += ['-mca', 'btl', 'tcp,self']
+    launch_args += ['--bind-to', 'core', '--map-by', 'core']
+    launch_args += ['--report-bindings']
+
     launch_args.append('%s/%s.%s.%s'
                        % (bin_dir, benchmark, benchmark_class, nprocs))
 
@@ -177,4 +199,4 @@ if __name__ == '__main__':
                                      '%s.%s.%d.results' % (benchmark, cls, nprocs),
                                      net_intf=NET_INTF)
 
-    os.remove('rankfile')
+    #os.remove('rankfile')

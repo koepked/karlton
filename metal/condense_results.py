@@ -6,6 +6,10 @@ DIR = sys.argv[1]
 OUT_FILE = 'condensed_results'
 
 if __name__ == '__main__':
+    header = [
+        '|    Kernel | Class | NProcs |        Run-time |        MOp/s     |',
+        '|-----------|-------|--------|-----------------|------------------|'
+    ]
     data = []
     files = [f for f in os.listdir(DIR) if os.path.isfile(os.path.join(DIR, f))]
 
@@ -26,4 +30,4 @@ if __name__ == '__main__':
 
     data.sort()
     with open(OUT_FILE, 'a') as out:
-        out.write('\n'.join(data))
+        out.write('\n'.join(header + data))
